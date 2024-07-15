@@ -1,0 +1,10 @@
+/target
+/log
+/logs
+bin/
+vendor/
+log/
+*.log
+*.exe
+.idea/
+.vscode/
