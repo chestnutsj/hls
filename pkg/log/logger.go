@@ -2,15 +2,17 @@ package log
 
 import (
 	"fmt"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/chestnutsj/hls/pkg/tools"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
-	"time"
 )
 
-type LogConfig struct {
+type Config struct {
 	Std     bool          `yaml:"std" default:"true"`
 	Dir     string        `yaml:"dir" default:"log" `
 	Level   zapcore.Level `yaml:"level" default:"info"`
@@ -18,7 +20,69 @@ type LogConfig struct {
 	MaxAge  int           `default:"1"`
 }
 
-func InitLogger(cfg LogConfig) {
+var (
+	once   sync.Once
+	devErr error
+	level  zap.AtomicLevel
+	logger *zap.Logger
+)
+
+func init() {
+	level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+}
+
+func SetLogLevel(l string) {
+	err := level.UnmarshalText([]byte(l))
+	if err != nil {
+		return
+	}
+}
+
+func Debug(msg string, fields ...zap.Field) {
+	if logger != nil {
+		logger.Debug(msg, fields...)
+	}
+}
+
+func Info(msg string, fields ...zap.Field) {
+	if logger != nil {
+		logger.Info(msg, fields...)
+	}
+}
+
+func Warn(msg string, fields ...zap.Field) {
+	if logger != nil {
+		logger.Warn(msg, fields...)
+	}
+}
+
+func Error(msg string, fields ...zap.Field) {
+	if logger != nil {
+		logger.Error(msg, fields...)
+	}
+}
+func DevLog() error {
+	var err error
+	once.Do(func() {
+		err = devLog()
+	})
+	return err
+}
+
+func devLog() error {
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	config.Level = level
+	var err error
+	logger, err = config.Build()
+	if err != nil {
+		return err
+	}
+	zap.ReplaceGlobals(logger)
+	return nil
+}
+
+func InitLogger(cfg Config) {
 	app := tools.AppName()
 	file := fmt.Sprintf("%s/%s.log", cfg.Dir, app) //filePath
 	hook := lumberjack.Logger{
@@ -52,9 +116,7 @@ func InitLogger(cfg LogConfig) {
 		EncodeName:     zapcore.FullNameEncoder,
 	}
 
-	level := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= cfg.Level
-	})
+	level.SetLevel(cfg.Level)
 	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 
 	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
@@ -69,15 +131,21 @@ func InitLogger(cfg LogConfig) {
 
 		zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), lowPriority),
 	)
-	Logger := zap.New(core, zap.AddCaller())
+	logger = zap.New(core, zap.AddCaller())
 
 	//Logger, _ = zap.NewProduction()
 
 	defer func() {
-		_ = Logger.Sync()
+		_ = logger.Sync()
 	}()
 
-	zap.ReplaceGlobals(Logger)
-	zap.RedirectStdLog(Logger)
-	Logger.Info("logger start")
+	zap.ReplaceGlobals(logger)
+	zap.RedirectStdLog(logger)
+	logger.Info("logger start")
+}
+
+func Sync() {
+	if logger != nil {
+		_ = logger.Sync()
+	}
 }
