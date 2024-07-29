@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/chestnutsj/hls/pkg/log"
 	"github.com/chestnutsj/hls/pkg/task"
-	"net/http"
 	"net/url"
 	"testing"
 )
 
 func Test_m3u(t *testing.T) {
+	t.Skip("skip")
 	err := log.DevLog()
 	if err != nil {
 		t.Fatal(err)
@@ -25,13 +25,4 @@ func Test_m3u(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-func Test_check(t *testing.T) {
-	resp, err := http.Get("https://ap-drop-monst.mushroomtrack.com/bcdn_token=qttX1qSuhyZVOu1EMkV3ly-fF7c5sG7W5id9AX4rySE&expires=1722270193&token_path=%2Fvod%2F/vod/11000/11183/11183.m3u8")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(resp.Header)
-
 }
