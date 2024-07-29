@@ -124,6 +124,8 @@ func (t *Task) Start() error {
 func (t *Task) run() error {
 
 	filename := filepath.Base(t.Url.Path)
+
+	filename = filepath.Join(t.Dir, filename)
 	m3uJob := download.NewHttpTask(t.ctx, t.Url, filename, true, &t.cfg, t.display)
 
 	err := m3uJob.Start()

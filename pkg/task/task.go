@@ -34,10 +34,10 @@ var statusMap = map[Status]string{
 }
 
 type Config struct {
-	ConnTimeout uint              `yaml:"conn_timeout" default:"5"`
+	ConnTimeout uint              `yaml:"conn_timeout" env:"CONN_TIMEOUT" default:"10"`
 	ChunkSize   int64             `yaml:"chunk_size" default:"1048576"`
-	RetryCount  uint              `yaml:"retry_count" default:"5"`
-	ThreadSize  int               `yaml:"thread_size" default:"10"`
+	RetryCount  uint              `yaml:"retry_count" env:"RETRY" default:"10"`
+	ThreadSize  int               `yaml:"thread_size" env:"THREAD_SIZE" default:"10"`
 	Headers     map[string]string `yaml:"headers"`
 }
 

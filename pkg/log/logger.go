@@ -13,9 +13,9 @@ import (
 )
 
 type Config struct {
-	Std     bool          `yaml:"std" default:"true"`
-	Dir     string        `yaml:"dir" default:"log" `
-	Level   zapcore.Level `yaml:"level" default:"info"`
+	Std     bool          `yaml:"std" env:"LOG_STD" default:"false"`
+	Dir     string        `yaml:"dir" env:"LOG_DIR" default:"log" `
+	Level   zapcore.Level `yaml:"level" env:"LOG_LEVEL" default:"warn"`
 	MaxFile int           `default:"7"`
 	MaxAge  int           `default:"1"`
 }
@@ -131,7 +131,7 @@ func InitLogger(cfg Config) {
 
 		zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), lowPriority),
 	)
-	logger = zap.New(core, zap.AddCaller())
+	logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
 	//Logger, _ = zap.NewProduction()
 

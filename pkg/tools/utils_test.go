@@ -57,8 +57,3 @@ func Test_FindPositions(t *testing.T) {
 	t.Log(len(uncovered))
 
 }
-
-func Test_util(t *testing.T) {
-	d := filepath.Dir("./test/xx.d/")
-	t.Log(d)
-}

@@ -186,6 +186,8 @@ func (j *Job) work() error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("%s resp is %d", urlStr, resp.StatusCode)
 	}
+
+	log.Info("resp", zap.Any("header", resp.Header))
 	contentLength, supportsRange, err := checkRangeSupportAndGetSize(resp)
 	if err != nil {
 		zap.L().Info("check resp failed")
