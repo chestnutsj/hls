@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	GitCommitLog   = "unknown"
-	BuildTime      = "unknown"
-	BuildGoVersion = "unknown"
+	Commit    = "unknown"
+	BuildTime = "unknown"
+	Version   = "unknown"
 )
 
 type TaskInfo struct {
@@ -30,7 +30,7 @@ type TaskInfo struct {
 
 var Cfg = struct {
 	Download task.Config `yaml:"download"`
-	Log      log.Config  `yaml:"log"`
+	Log      log.Config  `yaml:"log" default:"warning"`
 	Metric   string      `yaml:"metric"`
 	Debug    bool        `yaml:"debug" default:"true"`
 }{}
@@ -38,10 +38,23 @@ var Cfg = struct {
 func main() {
 
 	configFile := flag.String("config", "", "configuration file")
-	urlStr := flag.String("url", "", "download url")
-	output := flag.String("output", "", "output dir")
-	fileType := flag.Bool("m3u", false, "it is a m3u8 file")
+	urlStr := flag.String("u", "", "download url")
+	output := flag.String("o", "", "output dir")
+	fileType := flag.Bool("m", false, "it is a m3u8 file")
+	version := flag.Bool("v", false, "Show version")
+	help := flag.Bool("h", false, "Show help")
 	flag.Parse()
+
+	if *help || flag.NArg() == 0 && flag.NFlag() == 0 {
+		flag.PrintDefaults()
+		return
+	}
+
+	if *version {
+		fmt.Println("version:", Version, "build time:", BuildTime, "git commit:", Commit)
+		return
+	}
+
 	_ = os.Setenv("CONFIGOR_ENV_PREFIX", "-")
 
 	var err error
@@ -49,7 +62,6 @@ func main() {
 	if *configFile == "" {
 		err = configor.Load(&Cfg)
 	} else {
-
 		err = configor.Load(&Cfg, *configFile)
 	}
 
@@ -60,6 +72,7 @@ func main() {
 	}
 
 	if len(*urlStr) == 0 {
+		log.Error("url is empty")
 		return
 	}
 	u, err := url.Parse(*urlStr)
@@ -81,13 +94,17 @@ func main() {
 
 		job = m3u.NewM3uTask(ctx, p, &Cfg.Download, u, dir)
 	} else {
-		job = download.NewHttpTask(ctx, u, *output, false, &Cfg.Download, p)
+		filename := *output
+		if len(*output) == 0 {
+			filename = filepath.Base(u.Path)
+		}
+		job = download.NewHttpTask(ctx, u, filename, false, &Cfg.Download, p)
 	}
 
 	err = job.Start()
 	if err != nil {
 		log.Error("download", zap.Error(err))
 	} else {
-		fmt.Println("download success ", urlStr)
+		fmt.Println("download success ", *urlStr)
 	}
 }

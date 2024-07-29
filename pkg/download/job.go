@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -111,6 +112,7 @@ func (j *Job) Start() error {
 		if j.status.Load() == task.Running {
 			if j.lastErr == nil || err == nil {
 				j.status.Store(task.Completed)
+
 			} else {
 				j.status.Store(task.Aborted)
 			}
@@ -197,7 +199,14 @@ func (j *Job) work() error {
 	}
 
 	prof := NewProgress(bar)
-	defer prof.Close()
+	defer func() {
+		prof.Close()
+		if prof.cache != nil {
+			if err != nil && j.ctx.Err() == nil {
+				_ = os.RemoveAll(prof.cache.GetPath())
+			}
+		}
+	}()
 
 	chunk, err := NewChunk(j.info.FileName, prof)
 	if err != nil {
@@ -228,6 +237,7 @@ func (j *Job) work() error {
 			zap.L().Info("reStart download", zap.Int("jobsMap", len(jobsMap)))
 		}
 		err = transfer.DownloadMtiThread(chunk.writeChan, j.cfg.ThreadSize, jobsMap)
+
 	} else {
 		zap.L().Info("start download single")
 		err = transfer.DownloadPerThread(chunk.writeChan, 0, 0)

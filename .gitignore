@@ -8,3 +8,5 @@ log/
 *.exe
 .idea/
 .vscode/
+output/
+.env/

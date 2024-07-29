@@ -93,7 +93,6 @@ func (p *Progress) GetTasks(total int64, chunkSize int64) map[int64]int64 {
 }
 
 func (p *Progress) Close() {
-
 	if p.cache != nil {
 		_ = p.cache.Close()
 	}

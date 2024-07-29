@@ -1,0 +1,1 @@
+go build -ldflags="-X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) -X main.Version=$(git rev-parse --short HEAD)" -o output/hlx.exe ./cmd/main.go

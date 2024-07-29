@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	level = zap.NewAtomicLevelAt(zapcore.WarnLevel)
 }
 
 func SetLogLevel(l string) {
