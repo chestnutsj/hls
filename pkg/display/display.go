@@ -36,10 +36,41 @@ func NewDisplay() *Display {
 
 }
 
+func (d *Display) AddBarCount(name string, total int64, desc string) *mpb.Bar {
+	//
+	if Disable {
+		return nil
+	}
+	if len(name) > 15 {
+		name = name[:15]
+	}
+
+	bar := d.p.AddBar(int64(total),
+		mpb.PrependDecorators(
+			// simple name decorator
+			decor.Name(name),
+			// decor.DSyncWidth bit enables column width synchronization
+			decor.CountersNoUnit(""),
+		),
+		mpb.AppendDecorators(
+			decor.OnComplete(
+				// ETA decorator with ewma age of 30
+				decor.EwmaETA(decor.ET_STYLE_GO, 30, decor.WCSyncWidth), desc,
+			),
+			decor.Percentage(decor.WCSyncSpace),
+		),
+	)
+
+	return bar
+}
+
 func (d *Display) AddBar(name string, total int64, desc string) *mpb.Bar {
 	//
 	if Disable {
 		return nil
+	}
+	if len(name) > 15 {
+		name = name[:15]
 	}
 
 	bar := d.p.AddBar(int64(total),

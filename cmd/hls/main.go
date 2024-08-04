@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/chestnutsj/hls/pkg/display"
 	"github.com/chestnutsj/hls/pkg/download"
+	"github.com/chestnutsj/hls/pkg/hook"
 	"github.com/chestnutsj/hls/pkg/log"
 	"github.com/chestnutsj/hls/pkg/m3u"
 	"github.com/chestnutsj/hls/pkg/metrics"
@@ -16,18 +18,13 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 var (
-	Commit    = "unknown"
 	BuildTime = "unknown"
 	Version   = "unknown"
 )
-
-type TaskInfo struct {
-	TaskKey  url.URL
-	FileName string
-}
 
 var Cfg = struct {
 	Download task.Config `yaml:"download"`
@@ -44,6 +41,8 @@ func main() {
 	m3uUrl := flag.String("m", "", "it is a m3u8 file")
 	version := flag.Bool("v", false, "Show version")
 	help := flag.Bool("h", false, "Show help")
+	loadPlugin := flag.String("plugin", hook.PluginName, "download decode plugin")
+
 	flag.Parse()
 
 	if *help || flag.NArg() == 0 && flag.NFlag() == 0 {
@@ -52,7 +51,7 @@ func main() {
 	}
 
 	if *version {
-		fmt.Println("version:", Version, "build time:", BuildTime, "git commit:", Commit)
+		fmt.Println("version:", Version, "build time:", BuildTime)
 		return
 	}
 
@@ -132,6 +131,41 @@ func main() {
 	if err != nil {
 		log.Error("download", zap.Error(err))
 	} else {
+		log.Info("download success")
 		fmt.Println("download success ", *urlStr)
+
+		if len(*m3uUrl) > 0 && len(*loadPlugin) > 0 {
+			data, err := job.Extra()
+			if err == nil {
+				info := make(map[string]interface{})
+				err = json.Unmarshal(data, &info)
+				if err == nil {
+
+					pluginNameAbs, err := filepath.Abs(*loadPlugin)
+					if err != nil {
+						zap.L().Error("get pluginNameFile abs failed", zap.Error(err))
+						return
+					}
+					pluginName := filepath.Base(pluginNameAbs)
+					pluginNameAbs = addExeSuffix(pluginNameAbs)
+					hook.LoadPlugin(pluginNameAbs, pluginName, info)
+
+				}
+			}
+		}
 	}
+
+}
+
+func addExeSuffix(n string) string {
+
+	if len(filepath.Ext(n)) == 0 {
+		isWindows := strings.Contains(os.Getenv("GOOS"), "windows")
+		if isWindows {
+			n += ".exe"
+		}
+
+	}
+
+	return n
 }

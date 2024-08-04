@@ -204,7 +204,7 @@ func (j *Job) work() error {
 	defer func() {
 		prof.Close()
 		if prof.cache != nil {
-			if err != nil && j.ctx.Err() == nil {
+			if err == nil && j.ctx.Err() == nil {
 				_ = os.RemoveAll(prof.cache.GetPath())
 			}
 		}

@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -40,6 +41,8 @@ type Task struct {
 	Dir     string
 	display *display.Display
 	cfg     task.Config
+	info    map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (t *Task) GetType() string {
@@ -66,8 +69,9 @@ func (t *Task) Exit() error {
 }
 
 func (t *Task) Extra() ([]byte, error) {
-
-	return nil, nil
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	return json.Marshal(t.info)
 }
 
 func NewM3uTaskCache(ctx context.Context, displayOpt *display.Display, cfg *task.Config, value []byte) (task.Task, error) {
@@ -100,6 +104,7 @@ func NewM3uTask(ctx context.Context, displayOpt *display.Display, cfg *task.Conf
 		Dir:     dir,
 		display: displayOpt,
 		cfg:     *cfg,
+		info:    make(map[string]interface{}),
 	}
 	t.status.Store(task.Pending)
 	return t
@@ -147,7 +152,13 @@ func (t *Task) run() error {
 		log.Error("unmarshal m3uJob info failed", zap.Error(err))
 	}
 	log.Info("start to check", zap.String("file", jobInfo.FileName))
-
+	{
+		t.lock.Lock()
+		defer t.lock.Unlock()
+		t.info["file"] = jobInfo.FileName
+		t.info["url"] = jobInfo.Url
+		t.info["dir"] = t.Dir
+	}
 	taskList, err := CheckIsM3u(jobInfo.FileName)
 	if err != nil {
 		log.Warn("it is not a m3u file", zap.Error(err))
@@ -162,7 +173,7 @@ func (t *Task) run() error {
 
 	var bar *mpb.Bar
 	if t.display != nil {
-		bar = t.display.AddBar(t.Dir, int64(len(taskList)), "down")
+		bar = t.display.AddBarCount(t.Dir, int64(len(taskList)), "down")
 	}
 	curr := time.Now()
 	for _, jobName := range taskList {
