@@ -14,6 +14,7 @@ import (
 	"github.com/chestnutsj/hls/pkg/task"
 	"github.com/jinzhu/configor"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -42,6 +43,7 @@ func main() {
 	version := flag.Bool("v", false, "Show version")
 	help := flag.Bool("h", false, "Show help")
 	loadPlugin := flag.String("plugin", hook.PluginName, "download decode plugin")
+	genCfg := flag.Bool("genCfg", false, "generator config ")
 
 	flag.Parse()
 
@@ -52,6 +54,14 @@ func main() {
 
 	if *version {
 		fmt.Println("version:", Version, "build time:", BuildTime)
+		return
+	}
+	if *genCfg {
+		fmt.Println("cfg demo:")
+		data, err := yaml.Marshal(&Cfg)
+		if err == nil {
+		}
+		fmt.Println(string(data))
 		return
 	}
 

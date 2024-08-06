@@ -3,6 +3,7 @@ module github.com/chestnutsj/hls
 go 1.21
 
 require (
+	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/go-plugin v1.6.1
 	github.com/jinzhu/configor v1.2.2
 	github.com/mattn/go-isatty v0.0.20
@@ -10,6 +11,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/vbauerster/mpb/v8 v8.7.4
 	go.uber.org/zap v1.16.0
+	gopkg.in/yaml.v2 v2.3.0
 )
 
 require (
@@ -21,7 +23,6 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/hashicorp/go-hclog v0.14.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect

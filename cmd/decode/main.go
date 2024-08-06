@@ -8,6 +8,7 @@ import (
 	"github.com/chestnutsj/hls/pkg/hook"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -46,6 +47,7 @@ func (Decoder) StartDecoder(data string) error {
 	if err != nil {
 		return fmt.Errorf("can't open file %s", shellName)
 	}
+
 	defer file.Close()
 
 	_, err = file.WriteString(fmt.Sprintf("#!/bin/bash\n"))
@@ -53,14 +55,11 @@ func (Decoder) StartDecoder(data string) error {
 
 		return err
 	}
-	_, err = file.WriteString(fmt.Sprintf("cd %s\n", filepath.ToSlash(dirName)))
-	if err != nil {
-		return err
-	}
 	_, err = file.WriteString(fmt.Sprintf("ffmpeg  -allowed_extensions ALL -i '%s' -c:v h264_nvenc '%s'.mp4\n", name, dir))
 	if err != nil {
 		return err
 	}
+	log.Println("run ", shellName)
 	return nil
 }
 
@@ -86,7 +85,7 @@ func main() {
 			*loadPlugin: &hook.DecoderPlugin{Impl: dec},
 		},
 		GRPCServer: nil,
+		Logger:     logger,
 	}
 	plugin.Serve(&cfg)
-
 }
